@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">UPCAT Reviewer by osias.org</string>
+    <string name="title_activity_main">UPCAT Reviewer by osias.org</string>
+    <string name="package_name">com.osias.upcatreviewer</string>
+    <string name="custom_url_scheme">com.osias.upcatreviewer</string>
+</resources>
