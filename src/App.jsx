@@ -1,7 +1,8 @@
+// src/App.jsx
 import { useState, useEffect, useRef } from "react";
 
-// ─────────────────────────────── BASE QUESTION BANK (FilipiKnow) ───────────────────────────────
-const BASE_QUESTIONS = {
+// ─────────────────────────────── BASE QUESTION BANK (FilipiKnow + CET Mock) ───────────────────────────────
+const BASE_CATEGORIES = {
   language: {
     label: "Language Proficiency", icon: "📝", color: "#3B82F6",
     items: [
@@ -43,11 +44,7 @@ const BASE_QUESTIONS = {
     items: [
       { id: "read1", q: '(The Challenge) "This series of choreographed moves performed to music required a couple of qualities." How can the underlined words be better written?', choices: ['some abilities she had to develop', 'specific physical qualities', 'special moves', 'great strength and control'], ans: 3, exp: 'Specific detail.' }
     ]
-  }
-};
-
-// ─────────────────────────────── CET MOCK EXAM (100 items) ───────────────────────────────
-const CET_MOCK = {
+  },
   cet_math: {
     label: "CET Math", icon: "🧮", color: "#F97316",
     items: [
@@ -175,14 +172,42 @@ const CET_MOCK = {
   }
 };
 
-// Merge all categories
-const ALL_CATEGORIES = {
-  ...BASE_QUESTIONS,
-  ...CET_MOCK
+// ─────────────────────────────── THEMES ───────────────────────────────
+const THEMES = {
+  dark: {
+    name: "Night Mode", icon: "🌙",
+    bg: "linear-gradient(135deg,#080C18 0%,#0C1828 55%,#080C18 100%)",
+    surface: "rgba(255,255,255,0.045)", surfaceBorder: "rgba(255,255,255,0.09)", surfaceHover: "rgba(255,255,255,0.07)",
+    text: "#E4EAF4", textSub: "#8FA3BE", textMuted: "#445568",
+    accent: "#4F8EF7", accentGrad: "linear-gradient(135deg,#4F8EF7,#9B6FF5)", accentGrad2: "linear-gradient(135deg,#9B6FF5,#F06EBA)",
+    success: "#12C383", successBg: "rgba(18,195,131,0.13)", successBorder: "rgba(18,195,131,0.32)", successText: "#6EE7C0",
+    danger: "#F05060", dangerBg: "rgba(240,80,96,0.13)", dangerBorder: "rgba(240,80,96,0.32)", dangerText: "#FFA5AE",
+    inputBg: "rgba(255,255,255,0.055)", inputBorder: "rgba(255,255,255,0.11)", modalBg: "#0C1828",
+    progressBg: "rgba(255,255,255,0.09)", headFont: "'Space Grotesk',sans-serif", bodyFont: "'Inter',system-ui,sans-serif",
+    gFonts: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap",
+    t1: "#4F8EF7", t2: "#C4B5FD"
+  },
+  girl: {
+    name: "Blossom", icon: "🌸",
+    bg: "linear-gradient(135deg,#FEF0F5 0%,#FCE8F0 40%,#F3E8FF 100%)",
+    surface: "rgba(255,255,255,0.82)", surfaceBorder: "rgba(236,72,153,0.13)", surfaceHover: "rgba(251,207,232,0.42)",
+    text: "#4A1040", textSub: "#9D4080", textMuted: "#C080A8",
+    accent: "#E8187A", accentGrad: "linear-gradient(135deg,#F472B6,#A855F7)", accentGrad2: "linear-gradient(135deg,#FB7185,#F472B6)",
+    success: "#047857", successBg: "rgba(4,120,87,0.1)", successBorder: "rgba(4,120,87,0.24)", successText: "#065F46",
+    danger: "#BE123C", dangerBg: "rgba(190,18,60,0.08)", dangerBorder: "rgba(190,18,60,0.2)", dangerText: "#9F1239",
+    inputBg: "rgba(255,255,255,0.95)", inputBorder: "rgba(236,72,153,0.22)", modalBg: "#FFF4F9",
+    progressBg: "rgba(236,72,153,0.11)", headFont: "'Playfair Display',serif", bodyFont: "'Nunito',sans-serif",
+    gFonts: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Nunito:wght@400;600;700;800;900&display=swap",
+    t1: "#E8187A", t2: "#A855F7"
+  }
 };
 
-// ─────────────────────────────── LOCALSTORAGE KEYS ───────────────────────────────
-const STORAGE_KEYS = {
+// ─────────────────────────────── HELPERS ───────────────────────────────
+const uid = () => Math.random().toString(36).slice(2, 9);
+const shuffleArray = (arr) => [...arr].sort(() => Math.random() - 0.5);
+
+// LocalStorage keys
+const STORAGE = {
   USER_NAME: "upcat_user_name",
   USER_HISTORY: "upcat_user_history",
   CUSTOM_CATS: "upcat_custom_categories",
@@ -190,40 +215,32 @@ const STORAGE_KEYS = {
   QUIZ_PROGRESS: "upcat_quiz_progress"
 };
 
-// Helper functions
-const uid = () => Math.random().toString(36).slice(2, 9);
-const shuffleArray = (arr) => [...arr].sort(() => Math.random() - 0.5);
-
 export default function App() {
   // Theme
   const [theme, setTheme] = useState("dark");
-  const THEMES = {
-    dark: { name: "Night Mode", icon: "🌙", bg: "linear-gradient(135deg,#080C18 0%,#0C1828 55%,#080C18 100%)", surface: "rgba(255,255,255,0.045)", surfaceBorder: "rgba(255,255,255,0.09)", surfaceHover: "rgba(255,255,255,0.07)", text: "#E4EAF4", textSub: "#8FA3BE", textMuted: "#445568", accent: "#4F8EF7", accentGrad: "linear-gradient(135deg,#4F8EF7,#9B6FF5)", accentGrad2: "linear-gradient(135deg,#9B6FF5,#F06EBA)", success: "#12C383", successBg: "rgba(18,195,131,0.13)", successBorder: "rgba(18,195,131,0.32)", successText: "#6EE7C0", danger: "#F05060", dangerBg: "rgba(240,80,96,0.13)", dangerBorder: "rgba(240,80,96,0.32)", dangerText: "#FFA5AE", inputBg: "rgba(255,255,255,0.055)", inputBorder: "rgba(255,255,255,0.11)", modalBg: "#0C1828", progressBg: "rgba(255,255,255,0.09)", headFont: "'Space Grotesk',sans-serif", bodyFont: "'Inter',system-ui,sans-serif", gFonts: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap", t1: "#4F8EF7", t2: "#C4B5FD" },
-    girl: { name: "Blossom", icon: "🌸", bg: "linear-gradient(135deg,#FEF0F5 0%,#FCE8F0 40%,#F3E8FF 100%)", surface: "rgba(255,255,255,0.82)", surfaceBorder: "rgba(236,72,153,0.13)", surfaceHover: "rgba(251,207,232,0.42)", text: "#4A1040", textSub: "#9D4080", textMuted: "#C080A8", accent: "#E8187A", accentGrad: "linear-gradient(135deg,#F472B6,#A855F7)", accentGrad2: "linear-gradient(135deg,#FB7185,#F472B6)", success: "#047857", successBg: "rgba(4,120,87,0.1)", successBorder: "rgba(4,120,87,0.24)", successText: "#065F46", danger: "#BE123C", dangerBg: "rgba(190,18,60,0.08)", dangerBorder: "rgba(190,18,60,0.2)", dangerText: "#9F1239", inputBg: "rgba(255,255,255,0.95)", inputBorder: "rgba(236,72,153,0.22)", modalBg: "#FFF4F9", progressBg: "rgba(236,72,153,0.11)", headFont: "'Playfair Display',serif", bodyFont: "'Nunito',sans-serif", gFonts: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Nunito:wght@400;600;700;800;900&display=swap", t1: "#E8187A", t2: "#A855F7" }
-  };
   const T = THEMES[theme];
 
-  // App state
-  const [screen, setScreen] = useState("home");
-  const [userName, setUserName] = useState(() => localStorage.getItem(STORAGE_KEYS.USER_NAME) || "Reviewee");
+  // User data
+  const [userName, setUserName] = useState(() => localStorage.getItem(STORAGE.USER_NAME) || "Reviewee");
   const [userHistory, setUserHistory] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.USER_HISTORY);
+    const saved = localStorage.getItem(STORAGE.USER_HISTORY);
     return saved ? JSON.parse(saved) : [];
   });
   const [customCategories, setCustomCategories] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.CUSTOM_CATS);
+    const saved = localStorage.getItem(STORAGE.CUSTOM_CATS);
     return saved ? JSON.parse(saved) : {};
   });
   const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    const saved = localStorage.getItem(STORAGE.SETTINGS);
     return saved ? JSON.parse(saved) : { randomizeChoices: false };
   });
   const [quizProgress, setQuizProgress] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.QUIZ_PROGRESS);
+    const saved = localStorage.getItem(STORAGE.QUIZ_PROGRESS);
     return saved ? JSON.parse(saved) : null;
   });
 
-  // Quiz active state
+  // UI state
+  const [screen, setScreen] = useState("home");
   const [selectedCats, setSelectedCats] = useState([]);
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -234,45 +251,48 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
-  // Manage categories (base + custom)
-  const allCategories = { ...ALL_CATEGORIES, ...customCategories };
+  // Category management modal
+  const [showCatModal, setShowCatModal] = useState(false);
+  const [editingCatId, setEditingCatId] = useState(null);
+  const [catForm, setCatForm] = useState({ id: "", label: "", icon: "📌", color: "#4F8EF7" });
 
-  // Save handlers
+  // Question management
+  const [selectedCatForQuestion, setSelectedCatForQuestion] = useState(null);
+  const [showQuestionModal, setShowQuestionModal] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState(null);
+  const [questionForm, setQuestionForm] = useState({ q: "", choices: ["", "", "", ""], ans: 0, exp: "" });
+
+  // Combine base + custom
+  const allCategories = { ...BASE_CATEGORIES, ...customCategories };
+
+  // Persist effects
+  useEffect(() => { localStorage.setItem(STORAGE.USER_NAME, userName); }, [userName]);
+  useEffect(() => { localStorage.setItem(STORAGE.USER_HISTORY, JSON.stringify(userHistory)); }, [userHistory]);
+  useEffect(() => { localStorage.setItem(STORAGE.CUSTOM_CATS, JSON.stringify(customCategories)); }, [customCategories]);
+  useEffect(() => { localStorage.setItem(STORAGE.SETTINGS, JSON.stringify(settings)); }, [settings]);
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.USER_NAME, userName);
-  }, [userName]);
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.USER_HISTORY, JSON.stringify(userHistory));
-  }, [userHistory]);
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CUSTOM_CATS, JSON.stringify(customCategories));
-  }, [customCategories]);
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
-  }, [settings]);
-  useEffect(() => {
-    if (quizProgress) localStorage.setItem(STORAGE_KEYS.QUIZ_PROGRESS, JSON.stringify(quizProgress));
-    else localStorage.removeItem(STORAGE_KEYS.QUIZ_PROGRESS);
+    if (quizProgress) localStorage.setItem(STORAGE.QUIZ_PROGRESS, JSON.stringify(quizProgress));
+    else localStorage.removeItem(STORAGE.QUIZ_PROGRESS);
   }, [quizProgress]);
 
-  const showToast = (msg, type = "ok") => {
+  const showToastMsg = (msg, type = "ok") => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast({ msg, type });
     toastTimer.current = setTimeout(() => setToast(null), 2500);
   };
 
-  // Start new quiz
+  // ─────────────────────────────── QUIZ LOGIC ───────────────────────────────
   const startQuiz = (cats = selectedCats) => {
-    if (!cats.length) { showToast("Pumili ng kahit isang kategorya!", "err"); return; }
+    if (!cats.length) { showToastMsg("Select at least one category!", "err"); return; }
     let questions = [];
     cats.forEach(catId => {
       if (allCategories[catId]) {
         questions.push(...allCategories[catId].items.map(q => ({ ...q, catId, catLabel: allCategories[catId].label, catIcon: allCategories[catId].icon })));
       }
     });
-    if (questions.length === 0) { showToast("Walang tanong sa napiling kategorya", "err"); return; }
+    if (questions.length === 0) { showToastMsg("No questions in selected categories", "err"); return; }
     if (settings.randomizeChoices) {
-      questions = questions.map(q => ({ ...q, choices: shuffleArray(q.choices), ans: q.ans })); // ans index remains correct? Need remap. Simpler: keep as is but shuffle presentation later.
+      questions = questions.map(q => ({ ...q, choices: shuffleArray(q.choices) }));
     }
     const shuffledQs = shuffleArray(questions);
     setQuizQuestions(shuffledQs);
@@ -285,7 +305,6 @@ export default function App() {
     setScreen("quiz");
   };
 
-  // Resume quiz
   const resumeQuiz = () => {
     if (!quizProgress) return;
     setQuizQuestions(quizProgress.questions);
@@ -297,7 +316,6 @@ export default function App() {
     setScreen("quiz");
   };
 
-  // Save progress
   const saveProgress = () => {
     if (screen === "quiz" && quizQuestions.length) {
       setQuizProgress({
@@ -308,11 +326,10 @@ export default function App() {
         score: quizScore,
         history: quizHistoryDetails
       });
-      showToast("Na-save ang progress! Balik ka muli.", "ok");
+      showToastMsg("Progress saved! You can resume later.", "ok");
     }
   };
 
-  // Answer handler
   const handleAnswer = (choiceIdx) => {
     if (isAnswered) return;
     const q = quizQuestions[currentIndex];
@@ -326,15 +343,15 @@ export default function App() {
 
   const nextQuestion = () => {
     if (currentIndex + 1 >= quizQuestions.length) {
-      // Finish quiz
       const total = quizQuestions.length;
-      const percent = Math.round((quizScore + (isAnswered && selectedChoice === quizQuestions[currentIndex].ans ? 1 : 0)) / total * 100);
+      const finalScore = quizScore + (isAnswered && selectedChoice === quizQuestions[currentIndex].ans ? 1 : 0);
+      const percent = Math.round(finalScore / total * 100);
       const newRecord = {
         id: uid(),
         date: new Date().toISOString(),
         categories: selectedCats,
         totalQs: total,
-        score: quizScore + (isAnswered && selectedChoice === quizQuestions[currentIndex].ans ? 1 : 0),
+        score: finalScore,
         percent,
         details: [...quizHistoryDetails, { q: quizQuestions[currentIndex], selected: selectedChoice, correct: selectedChoice === quizQuestions[currentIndex].ans }]
       };
@@ -348,47 +365,111 @@ export default function App() {
     }
   };
 
-  // Manage questions (CRUD)
-  const addCategory = (catId, label, icon, color) => {
-    if (customCategories[catId] || ALL_CATEGORIES[catId]) { showToast("Category ID exists", "err"); return; }
-    setCustomCategories(prev => ({ ...prev, [catId]: { label, icon, color, items: [] } }));
-    showToast("Category added", "ok");
-  };
-  const addQuestion = (catId, newQ) => {
-    if (!customCategories[catId] && !ALL_CATEGORIES[catId]) { showToast("Category not found", "err"); return; }
-    const questionWithId = { ...newQ, id: uid() };
-    if (customCategories[catId]) {
-      setCustomCategories(prev => ({
-        ...prev,
-        [catId]: { ...prev[catId], items: [...prev[catId].items, questionWithId] }
-      }));
-    } else {
-      // For base categories, we cannot modify directly? We'll allow by copying to custom? To keep it simple, we only allow editing custom categories.
-      showToast("Base categories cannot be edited directly. Copy to custom or add custom category.", "err");
-    }
-  };
-  const editQuestion = (catId, qId, updatedQ) => {
-    if (!customCategories[catId]) { showToast("Only custom categories editable", "err"); return; }
-    setCustomCategories(prev => ({
-      ...prev,
-      [catId]: {
-        ...prev[catId],
-        items: prev[catId].items.map(q => q.id === qId ? { ...updatedQ, id: qId } : q)
-      }
-    }));
-  };
-  const deleteQuestion = (catId, qId) => {
-    if (!customCategories[catId]) return;
-    setCustomCategories(prev => ({
-      ...prev,
-      [catId]: { ...prev[catId], items: prev[catId].items.filter(q => q.id !== qId) }
-    }));
+  // ─────────────────────────────── CATEGORY CRUD (visual) ───────────────────────────────
+  const openAddCategory = () => {
+    setEditingCatId(null);
+    setCatForm({ id: "", label: "", icon: "📌", color: "#4F8EF7" });
+    setShowCatModal(true);
   };
 
-  // Render helpers
+  const openEditCategory = (catId) => {
+    const cat = customCategories[catId];
+    if (!cat) return;
+    setEditingCatId(catId);
+    setCatForm({ id: catId, label: cat.label, icon: cat.icon, color: cat.color });
+    setShowCatModal(true);
+  };
+
+  const saveCategory = () => {
+    if (!catForm.id || !catForm.label) { showToastMsg("Category ID and Label required", "err"); return; }
+    if (!editingCatId && (BASE_CATEGORIES[catForm.id] || customCategories[catForm.id])) {
+      showToastMsg("Category ID already exists", "err");
+      return;
+    }
+    const newCat = {
+      label: catForm.label,
+      icon: catForm.icon || "📌",
+      color: catForm.color,
+      items: editingCatId ? customCategories[editingCatId].items : []
+    };
+    setCustomCategories(prev => ({ ...prev, [catForm.id]: newCat }));
+    if (editingCatId && editingCatId !== catForm.id) {
+      // remove old key
+      const { [editingCatId]: _, ...rest } = customCategories;
+      setCustomCategories({ ...rest, [catForm.id]: newCat });
+    }
+    setShowCatModal(false);
+    showToastMsg(editingCatId ? "Category updated" : "Category added", "ok");
+  };
+
+  const deleteCategory = (catId) => {
+    if (window.confirm(`Delete category "${customCategories[catId].label}" and all its questions?`)) {
+      const { [catId]: _, ...rest } = customCategories;
+      setCustomCategories(rest);
+      showToastMsg("Category deleted", "ok");
+    }
+  };
+
+  // ─────────────────────────────── QUESTION CRUD ───────────────────────────────
+  const openAddQuestion = (catId) => {
+    setSelectedCatForQuestion(catId);
+    setEditingQuestion(null);
+    setQuestionForm({ q: "", choices: ["", "", "", ""], ans: 0, exp: "" });
+    setShowQuestionModal(true);
+  };
+
+  const openEditQuestion = (catId, q) => {
+    setSelectedCatForQuestion(catId);
+    setEditingQuestion(q);
+    setQuestionForm({
+      q: q.q,
+      choices: [...q.choices],
+      ans: q.ans,
+      exp: q.exp
+    });
+    setShowQuestionModal(true);
+  };
+
+  const saveQuestion = () => {
+    if (!questionForm.q || questionForm.choices.some(c => !c)) {
+      showToastMsg("Question and all 4 choices required", "err");
+      return;
+    }
+    const newQuestion = {
+      id: editingQuestion ? editingQuestion.id : uid(),
+      q: questionForm.q,
+      choices: questionForm.choices,
+      ans: questionForm.ans,
+      exp: questionForm.exp
+    };
+    setCustomCategories(prev => {
+      const cat = prev[selectedCatForQuestion];
+      let newItems;
+      if (editingQuestion) {
+        newItems = cat.items.map(item => item.id === editingQuestion.id ? newQuestion : item);
+      } else {
+        newItems = [...cat.items, newQuestion];
+      }
+      return { ...prev, [selectedCatForQuestion]: { ...cat, items: newItems } };
+    });
+    setShowQuestionModal(false);
+    showToastMsg(editingQuestion ? "Question updated" : "Question added", "ok");
+  };
+
+  const deleteQuestion = (catId, qId) => {
+    if (window.confirm("Delete this question?")) {
+      setCustomCategories(prev => ({
+        ...prev,
+        [catId]: { ...prev[catId], items: prev[catId].items.filter(q => q.id !== qId) }
+      }));
+      showToastMsg("Question deleted", "ok");
+    }
+  };
+
+  // Styles
   const styles = {
     page: { minHeight: "100vh", background: T.bg, fontFamily: T.bodyFont, color: T.text, padding: "0 0 52px" },
-    wrap: { maxWidth: 800, margin: "0 auto", padding: "24px 16px" },
+    wrap: { maxWidth: 900, margin: "0 auto", padding: "24px 16px" },
     card: { background: T.surface, borderRadius: 20, padding: 24, border: `1px solid ${T.surfaceBorder}`, backdropFilter: "blur(12px)" },
     cardSm: { background: T.surface, borderRadius: 14, padding: "13px 16px", border: `1px solid ${T.surfaceBorder}` },
     btn: (bg, c = T.text) => ({ cursor: "pointer", border: "none", borderRadius: 12, padding: "11px 18px", background: bg, color: c, fontWeight: 700, fontFamily: T.bodyFont, fontSize: 14, transition: "all .15s", display: "inline-flex", alignItems: "center", gap: 6 })
@@ -407,11 +488,14 @@ export default function App() {
         .cBtn.wrong{border-color:${T.danger}!important;background:${T.dangerBg}!important;color:${T.dangerText}!important}
         @keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         .fu{animation:fu .28s ease}
+        input, select, textarea { background: ${T.inputBg}; border: 1px solid ${T.inputBorder}; color: ${T.text}; padding: 8px 12px; border-radius: 8px; }
+        .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: ${T.modalBg}; border-radius: 24px; padding: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow: auto; border: 1px solid ${T.surfaceBorder}; }
       `}</style>
 
       {toast && <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", padding: "11px 22px", borderRadius: 12, background: toast.type === "err" ? T.dangerBg : T.successBg, color: toast.type === "err" ? T.dangerText : T.successText, border: `1px solid ${toast.type === "err" ? T.dangerBorder : T.successBorder}`, fontWeight: 700, zIndex: 999, whiteSpace: "nowrap" }}>{toast.msg}</div>}
 
-      {/* Navigation Bar */}
+      {/* Top Nav */}
       <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 20px", background: T.surface, borderBottom: `1px solid ${T.surfaceBorder}` }}>
         <div style={{ fontWeight: 800, fontSize: 18, cursor: "pointer" }} onClick={() => setScreen("home")}>📘 UPCAT Reviewer</div>
         <div style={{ display: "flex", gap: 12 }}>
@@ -421,13 +505,13 @@ export default function App() {
         </div>
       </div>
 
-      {/* HOME SCREEN */}
+      {/* HOME */}
       {screen === "home" && (
         <div style={styles.wrap}>
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             <h1 style={{ fontFamily: T.headFont, fontSize: 28 }}>🎯 Mock Exam Ready</h1>
-            <p style={{ color: T.textSub }}>Piliin ang kategorya, simulan ang quiz</p>
-            {quizProgress && <button style={{ ...styles.btn(T.accentGrad, "#fff"), marginTop: 10 }} onClick={resumeQuiz}>▶️ I-resume ang nakaraang quiz</button>}
+            <p style={{ color: T.textSub }}>Select categories → Start quiz</p>
+            {quizProgress && <button style={{ ...styles.btn(T.accentGrad, "#fff"), marginTop: 10 }} onClick={resumeQuiz}>▶️ Resume previous quiz</button>}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 12, marginBottom: 20 }}>
             {Object.entries(allCategories).map(([cid, cat]) => (
@@ -438,12 +522,12 @@ export default function App() {
               </div>
             ))}
           </div>
-          <button style={{ ...styles.btn(T.accentGrad, "#fff"), width: "100%", padding: 14, fontSize: 16 }} onClick={() => startQuiz(selectedCats)}>🚀 Simulan ang Quiz ({selectedCats.length} categories)</button>
-          <button style={{ ...styles.btn(T.surface, T.text), width: "100%", marginTop: 10 }} onClick={() => startQuiz(Object.keys(allCategories))}>📚 Lahat ng kategorya</button>
+          <button style={{ ...styles.btn(T.accentGrad, "#fff"), width: "100%", padding: 14, fontSize: 16 }} onClick={() => startQuiz(selectedCats)}>🚀 Start Quiz ({selectedCats.length} categories)</button>
+          <button style={{ ...styles.btn(T.surface, T.text), width: "100%", marginTop: 10 }} onClick={() => startQuiz(Object.keys(allCategories))}>📚 All Categories</button>
         </div>
       )}
 
-      {/* QUIZ SCREEN */}
+      {/* QUIZ */}
       {screen === "quiz" && quizQuestions.length > 0 && (
         <div style={styles.wrap} className="fu">
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
@@ -471,40 +555,40 @@ export default function App() {
           })}
           {isAnswered && (
             <div className="fu" style={{ ...styles.card, background: selectedChoice === quizQuestions[currentIndex].ans ? T.successBg : T.dangerBg, marginTop: 12 }}>
-              <p style={{ fontWeight: 800, color: selectedChoice === quizQuestions[currentIndex].ans ? T.successText : T.dangerText }}>{selectedChoice === quizQuestions[currentIndex].ans ? "✅ Tama!" : "❌ Mali!"}</p>
+              <p style={{ fontWeight: 800, color: selectedChoice === quizQuestions[currentIndex].ans ? T.successText : T.dangerText }}>{selectedChoice === quizQuestions[currentIndex].ans ? "✅ Correct!" : "❌ Wrong!"}</p>
               <p style={{ fontSize: 13 }}>{quizQuestions[currentIndex].exp}</p>
             </div>
           )}
-          {isAnswered && <button style={{ ...styles.btn(T.accentGrad, "#fff"), width: "100%", marginTop: 16 }} onClick={nextQuestion}>{currentIndex + 1 === quizQuestions.length ? "Tapos na!" : "Susunod →"}</button>}
+          {isAnswered && <button style={{ ...styles.btn(T.accentGrad, "#fff"), width: "100%", marginTop: 16 }} onClick={nextQuestion}>{currentIndex + 1 === quizQuestions.length ? "Finish" : "Next →"}</button>}
         </div>
       )}
 
-      {/* RESULTS SCREEN */}
+      {/* RESULTS */}
       {screen === "results" && (
         <div style={styles.wrap} className="fu">
           <div style={{ textAlign: "center", marginBottom: 24 }}>
-            <h2>🎉 Resulta</h2>
+            <h2>🎉 Results</h2>
             <div style={{ fontSize: 48, fontWeight: 800, color: T.accent }}>{Math.round((quizScore + (isAnswered && selectedChoice === quizQuestions[currentIndex]?.ans ? 1 : 0)) / quizQuestions.length * 100)}%</div>
-            <p>{quizScore + (isAnswered && selectedChoice === quizQuestions[currentIndex]?.ans ? 1 : 0)} / {quizQuestions.length} tama</p>
+            <p>{quizScore + (isAnswered && selectedChoice === quizQuestions[currentIndex]?.ans ? 1 : 0)} / {quizQuestions.length} correct</p>
           </div>
-          <button style={{ ...styles.btn(T.accentGrad, "#fff"), width: "100%" }} onClick={() => setScreen("home")}>🏠 Balik sa Home</button>
+          <button style={{ ...styles.btn(T.accentGrad, "#fff"), width: "100%" }} onClick={() => setScreen("home")}>🏠 Back to Home</button>
         </div>
       )}
 
-      {/* PROFILE & PERFORMANCE */}
+      {/* PROFILE */}
       {screen === "profile" && (
         <div style={styles.wrap}>
           <h2 style={{ marginBottom: 16 }}>👤 Profile</h2>
-          <input style={{ ...styles.cardSm, width: "100%", marginBottom: 20, background: T.inputBg, border: `1px solid ${T.inputBorder}` }} value={userName} onChange={e => setUserName(e.target.value)} placeholder="Pangalan" />
+          <input style={{ ...styles.cardSm, width: "100%", marginBottom: 20, background: T.inputBg, border: `1px solid ${T.inputBorder}` }} value={userName} onChange={e => setUserName(e.target.value)} placeholder="Your Name" />
           <h3>📊 Performance History</h3>
-          {userHistory.length === 0 && <p>Wala pang quiz na natapos.</p>}
+          {userHistory.length === 0 && <p>No quizzes taken yet.</p>}
           {userHistory.map(rec => (
             <div key={rec.id} style={{ ...styles.cardSm, marginTop: 12 }}>
               <p><strong>{new Date(rec.date).toLocaleString()}</strong> – {rec.percent}% ({rec.score}/{rec.totalQs})</p>
               <p style={{ fontSize: 12, color: T.textMuted }}>Categories: {rec.categories.join(", ")}</p>
             </div>
           ))}
-          <button style={{ ...styles.btn(T.surface), marginTop: 16 }} onClick={() => setScreen("home")}>← Bumalik</button>
+          <button style={{ ...styles.btn(T.surface), marginTop: 16 }} onClick={() => setScreen("home")}>← Back</button>
         </div>
       )}
 
@@ -514,7 +598,7 @@ export default function App() {
           <h2>⚙️ Settings</h2>
           <label style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16 }}>
             <input type="checkbox" checked={settings.randomizeChoices} onChange={e => setSettings({ ...settings, randomizeChoices: e.target.checked })} />
-            I-randomize ang order ng mga choices
+            Randomize answer order
           </label>
           <div style={{ marginTop: 24 }}>
             <p>Themes:</p>
@@ -522,44 +606,100 @@ export default function App() {
               <button key={k} style={{ ...styles.btn(theme === k ? T.accentGrad : T.surface), marginRight: 8 }} onClick={() => setTheme(k)}>{th.icon} {th.name}</button>
             ))}
           </div>
-          <button style={{ ...styles.btn(T.surface), marginTop: 24 }} onClick={() => setScreen("home")}>← Bumalik</button>
+          <button style={{ ...styles.btn(T.surface), marginTop: 24 }} onClick={() => setScreen("home")}>← Back</button>
         </div>
       )}
 
-      {/* MANAGE QUESTIONS & CATEGORIES */}
+      {/* MANAGE CATEGORIES & QUESTIONS */}
       {screen === "manage" && (
         <div style={styles.wrap}>
-          <h2>✏️ Manage Questions (Custom Only)</h2>
-          <button style={{ ...styles.btn(T.accentGrad, "#fff"), marginBottom: 16 }} onClick={() => {
-            const newId = prompt("Enter category ID (unique, no spaces):");
-            const label = prompt("Category label:");
-            const icon = prompt("Emoji icon:");
-            const color = prompt("Color code (#RRGGBB):");
-            if (newId && label) addCategory(newId, label, icon || "📌", color || "#888");
-          }}>+ Add New Category</button>
+          <h2>✏️ Manage Custom Categories</h2>
+          <button style={{ ...styles.btn(T.accentGrad, "#fff"), marginBottom: 16 }} onClick={openAddCategory}>+ Add New Category</button>
           {Object.entries(customCategories).map(([cid, cat]) => (
             <div key={cid} style={{ ...styles.card, marginBottom: 16 }}>
-              <h3 style={{ color: cat.color }}>{cat.icon} {cat.label}</h3>
-              <button style={{ ...styles.btn(T.surface, T.text), fontSize: 12 }} onClick={() => {
-                const qText = prompt("Question text:");
-                const choices = prompt("Choices separated by | (e.g., A|B|C|D):").split("|");
-                const ans = parseInt(prompt("Correct answer index (0-based):"));
-                const exp = prompt("Explanation:");
-                if (qText && choices.length && !isNaN(ans)) addQuestion(cid, { q: qText, choices, ans, exp });
-              }}>+ Add Question</button>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h3 style={{ color: cat.color }}>{cat.icon} {cat.label}</h3>
+                <div>
+                  <button style={{ ...styles.btn(T.surface), marginRight: 8 }} onClick={() => openEditCategory(cid)}>✏️ Edit</button>
+                  <button style={{ ...styles.btn(T.dangerBg, T.dangerText) }} onClick={() => deleteCategory(cid)}>🗑️ Delete</button>
+                </div>
+              </div>
+              <button style={{ ...styles.btn(T.surface, T.text), fontSize: 12, marginTop: 8 }} onClick={() => openAddQuestion(cid)}>+ Add Question</button>
               {cat.items.map(q => (
                 <div key={q.id} style={{ ...styles.cardSm, marginTop: 10, background: T.surfaceHover }}>
                   <p><strong>{q.q}</strong></p>
-                  <button style={{ fontSize: 12, marginRight: 8 }} onClick={() => {
-                    const newText = prompt("New question text:", q.q);
-                    if (newText) editQuestion(cid, q.id, { ...q, q: newText });
-                  }}>Edit</button>
+                  <button style={{ fontSize: 12, marginRight: 8 }} onClick={() => openEditQuestion(cid, q)}>Edit</button>
                   <button style={{ fontSize: 12, color: T.dangerText }} onClick={() => deleteQuestion(cid, q.id)}>Delete</button>
                 </div>
               ))}
             </div>
           ))}
-          <button style={{ ...styles.btn(T.surface) }} onClick={() => setScreen("home")}>← Bumalik</button>
+          <button style={{ ...styles.btn(T.surface) }} onClick={() => setScreen("home")}>← Back</button>
+        </div>
+      )}
+
+      {/* MODAL: Add/Edit Category */}
+      {showCatModal && (
+        <div className="modal-overlay" onClick={() => setShowCatModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3>{editingCatId ? "Edit Category" : "New Category"}</h3>
+            <div style={{ marginBottom: 12 }}>
+              <label>Category ID (unique, no spaces)</label>
+              <input type="text" value={catForm.id} onChange={e => setCatForm({ ...catForm, id: e.target.value })} disabled={!!editingCatId} style={{ width: "100%" }} />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label>Label</label>
+              <input type="text" value={catForm.label} onChange={e => setCatForm({ ...catForm, label: e.target.value })} style={{ width: "100%" }} />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label>Icon (emoji)</label>
+              <input type="text" value={catForm.icon} onChange={e => setCatForm({ ...catForm, icon: e.target.value })} style={{ width: "100%" }} />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label>Color</label>
+              <input type="color" value={catForm.color} onChange={e => setCatForm({ ...catForm, color: e.target.value })} style={{ width: "100%" }} />
+              <div style={{ background: catForm.color, height: 30, borderRadius: 8, marginTop: 8 }} />
+            </div>
+            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+              <button style={styles.btn(T.surface)} onClick={() => setShowCatModal(false)}>Cancel</button>
+              <button style={styles.btn(T.accentGrad, "#fff")} onClick={saveCategory}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Add/Edit Question */}
+      {showQuestionModal && (
+        <div className="modal-overlay" onClick={() => setShowQuestionModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
+            <h3>{editingQuestion ? "Edit Question" : "New Question"}</h3>
+            <div style={{ marginBottom: 12 }}>
+              <label>Question</label>
+              <textarea value={questionForm.q} onChange={e => setQuestionForm({ ...questionForm, q: e.target.value })} rows={2} style={{ width: "100%" }} />
+            </div>
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} style={{ marginBottom: 8 }}>
+                <label>Choice {String.fromCharCode(65 + i)}</label>
+                <input type="text" value={questionForm.choices[i]} onChange={e => {
+                  const newChoices = [...questionForm.choices];
+                  newChoices[i] = e.target.value;
+                  setQuestionForm({ ...questionForm, choices: newChoices });
+                }} style={{ width: "100%" }} />
+              </div>
+            ))}
+            <div style={{ marginBottom: 12 }}>
+              <label>Correct Answer Index (0-3)</label>
+              <input type="number" min="0" max="3" value={questionForm.ans} onChange={e => setQuestionForm({ ...questionForm, ans: parseInt(e.target.value) })} style={{ width: "100%" }} />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label>Explanation</label>
+              <textarea value={questionForm.exp} onChange={e => setQuestionForm({ ...questionForm, exp: e.target.value })} rows={2} style={{ width: "100%" }} />
+            </div>
+            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+              <button style={styles.btn(T.surface)} onClick={() => setShowQuestionModal(false)}>Cancel</button>
+              <button style={styles.btn(T.accentGrad, "#fff")} onClick={saveQuestion}>Save</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
