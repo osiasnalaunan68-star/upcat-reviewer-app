@@ -1,7 +1,6 @@
 workflows:
   capacitor-android:
     name: Capacitor Android APK
-    max_build_duration: 60
 
     environment:
       node: latest
@@ -12,17 +11,18 @@ workflows:
         script: |
           npm install
 
-      - name: Build Vite app
+      - name: Build web app
         script: |
           npm run build
 
       - name: Sync Capacitor
         script: |
-          npx cap sync android
+          npx cap sync
 
       - name: Build Android APK
         script: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleDebug
 
     artifacts:
